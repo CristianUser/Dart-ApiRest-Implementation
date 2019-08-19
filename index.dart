@@ -1,8 +1,11 @@
 
 
 
+import 'dart:convert';
 import 'dart:io';
-import 'router.dart';
+
+import 'controller/user.controller.dart';
+import 'lib/router.dart';
 
 dynamic resolveParams(String path)
 {
@@ -45,6 +48,11 @@ Future main() async {
     4040,
   );
   var router = new Router(server);
+  UserController userController = new UserController();
+
+  router.Get('/', (request){
+    request.response.write('Hello World!');
+  });
 
   router.Get('/greet', (request){
     request.response.write('Hello everbody');
@@ -58,8 +66,12 @@ Future main() async {
     request.response.write('[{name: "pedro"}]');
   });
 
-  router.Get('/users/:name/greet/:msg', (request, params){
+  router.Get('/users/:name/greet/:msg', (HttpRequest request, dynamic params){
     request.response.write('${params['msg']} ${params['name']}');
+  });
+
+  router.Post('/user',(HttpRequest request) {
+    return userController.createUser(request);
   });
 
   print('Listening on localhost:${server.port}');
