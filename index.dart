@@ -6,43 +6,9 @@ import 'dart:io';
 
 import 'controller/user.controller.dart';
 import 'lib/router.dart';
-
-dynamic resolveParams(String path)
-{
-  var route = '/user'.split('/');
-  var splited = path.split('/');
-  print(splited.toString() == route.toString());
-  if( splited.toString() == route.toString()){
-    return {
-      'status': 200
-    };
-  } else if(splited.length == route.length){
-    var params = new Map();
-    for (int i = 0;i<route.length;i++)
-    {
-      if(route[i] != splited[i]){
-        if(route[i][0] == ':'){
-          params[route[i].substring(1)] = splited[i];
-        } else {
-          return {
-            'status': 404
-          };
-        }
-      }
-    }
-    return {
-      'status': 200,
-      'params': params
-    };
-  }else {
-    return {
-      'status': 404
-    };
-  }
-}
+import 'lib/response.dart';
 
 Future main() async {
-  // print(resolveParams('/user/sdfs'));
   var server = await HttpServer.bind(
     InternetAddress.loopbackIPv4,
     4040,
@@ -50,9 +16,9 @@ Future main() async {
   var router = new Router(server);
   UserController userController = new UserController();
 
-  router.Get('/', (request){
-    request.response.write('Hello World!');
-  });
+  // router.Get('/', (request){
+  //   request.response.write('Hello World!');
+  // });
 
   router.Get('/greet', (request){
     request.response.write('Hello everbody');
@@ -71,7 +37,8 @@ Future main() async {
   });
 
   router.Post('/user',(HttpRequest request) {
-    return userController.createUser(request);
+    Response response = new Response(request.response);
+    return userController.createUser(request, response);
   });
 
   print('Listening on localhost:${server.port}');

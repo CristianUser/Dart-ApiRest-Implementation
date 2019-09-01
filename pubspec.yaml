@@ -1,0 +1,5 @@
+name: dartis
+version: 0.0.2
+author: Cristian Mejia <cristianmejia97@gmail.com>
+environment:
+  sdk: '>=2.0.0 <3.0.0'

@@ -1,14 +1,15 @@
 import 'dart:convert';
 import 'dart:io';
 
+import '../lib/request.dart';
+import '../lib/response.dart';
+
 class UserController {
   List<Map> users = [];
 
-  Future createUser(HttpRequest request) async {
-    HttpResponse response = request.response;
-    request.response.headers.contentType = ContentType.json;
-    String content = await utf8.decoder.bind(request).join();
-    await request.response.write(content);
-    // await this.users.add(jsonDecode(request.))
+  Future createUser(HttpRequest request, Response response) async {
+    
+    Request req = await new Request(request);
+    await response.statusCode(201).json(await req.body);
   }
 }

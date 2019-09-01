@@ -15,15 +15,30 @@ class Router {
   Future handleRequest(HttpRequest request) async {
   try {
     switch(request.method){
+      // case 'GET':
+      //   var endpoint = await this._getEndpoints.where((e) => this._resolveParams(e['path'], request.uri.path)['status'] == 200).toList()[0];
+      //   var params = _resolveParams(endpoint['path'], request.uri.path);
+      //   if(params['params'].length>0){
+      //     await endpoint['callback'](request, params['params']);
+      //   } else {
+      //     await endpoint['callback'](request);
+      //   }
+      //   await request.response.close();
+      // break;
+
       case 'GET':
-        var endpoint = await this._getEndpoints.where((e) => this._resolveParams(e['path'], request.uri.path)['status'] == 200).toList()[0];
-        var params = _resolveParams(endpoint['path'], request.uri.path);
-        if(params['params'].length>0){
-          await endpoint['callback'](request, params['params']);
-        } else {
-          await endpoint['callback'](request);
+        for (var endpoint in this._getEndpoints) {
+          var params = _resolveParams(endpoint['path'], request.uri.path);
+          if(params['status'] == 200){
+            if(params['params'].length > 0){
+              await endpoint['callback'](request, params['params']);
+            } else {
+              await endpoint['callback'](request);
+            }
+            await request.response.close();
+            break;
+          }
         }
-        await request.response.close();
       break;
 
       case 'DELETE':
@@ -60,7 +75,7 @@ class Router {
       break;
     }
   } catch (e) {
-    // print('Exception in handleRequest: $e');
+    print('Exception in handleRequest: $e');
     request.response.statusCode = 404;
     await request.response.write('Not Found');
     await request.response.close();
@@ -105,6 +120,8 @@ class Router {
   {
     var route = path.split('/');
     var splited = uri.split('/');
+  // print(splited.toString() == route.toString());
+
     if( splited.toString() == route.toString()){
       return {
         'status': 200,
