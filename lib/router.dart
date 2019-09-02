@@ -1,44 +1,39 @@
 import 'dart:io';
 
+import 'route.dart';
+
 class Router {
-  HttpServer server;
-  List<Map> _getEndpoints = [];
+
+  List<Route> _getEndpoints = [];
   List<Map> _postEndpoints = [];
   List<Map> _putEndpoints = [];
   List<Map> _deleteEndpoints = [];
   
 
-  Router(HttpServer server) {
-    this.server = server;
+  List<Route> get getEndpoints => this._getEndpoints;
+  List<Map> get postEndpoints => this._postEndpoints;
+
+  Router() {
   }
 
   Future handleRequest(HttpRequest request) async {
   try {
     switch(request.method){
-      // case 'GET':
-      //   var endpoint = await this._getEndpoints.where((e) => this._resolveParams(e['path'], request.uri.path)['status'] == 200).toList()[0];
-      //   var params = _resolveParams(endpoint['path'], request.uri.path);
-      //   if(params['params'].length>0){
-      //     await endpoint['callback'](request, params['params']);
-      //   } else {
-      //     await endpoint['callback'](request);
-      //   }
-      //   await request.response.close();
-      // break;
 
       case 'GET':
         for (var endpoint in this._getEndpoints) {
-          var params = _resolveParams(endpoint['path'], request.uri.path);
+          var params = _resolveParams(endpoint.path, request.uri.path);
           if(params['status'] == 200){
             if(params['params'].length > 0){
-              await endpoint['callback'](request, params['params']);
+              await endpoint.callback(request, params['params']);
             } else {
-              await endpoint['callback'](request);
+              await endpoint.callback(request);
             }
             await request.response.close();
             break;
           }
         }
+        await request.response.close();
       break;
 
       case 'DELETE':
@@ -93,11 +88,11 @@ class Router {
   }
 
   void Get(String path, Function callback ){
-    this._getEndpoints.add({
-      'method': 'GET',
-      'path': path,
-      'callback': callback
-    });
+    this._getEndpoints.add(new Route(
+      method: 'GET',
+      path: path,
+      callback: callback
+    ));
   }
 
     void Put(String path, Function callback ){
@@ -115,6 +110,15 @@ class Router {
       'callback': callback
     });
   }
+
+  Future use({String path = '', Router router}) async {
+    for(Route endpoint in router.getEndpoints){
+      this.Get(path + endpoint.path, endpoint.callback);
+    }
+    // await this._postEndpoints.addAll(router._postEndpoints);
+  }
+
+  // Private Methods
 
   dynamic _resolveParams(String path, String uri)
   {

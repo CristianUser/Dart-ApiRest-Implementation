@@ -4,18 +4,19 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'controller/user.controller.dart';
+
 import 'lib/router.dart';
 import 'lib/response.dart';
+import 'lib/server.dart';
+import 'routes/user.routes.dart';
+
 
 Future main() async {
-  var server = await HttpServer.bind(
-    InternetAddress.loopbackIPv4,
-    4040,
-  );
-  var router = new Router(server);
-  UserController userController = new UserController();
 
+  var router = new Router();
+  var userRouter = new UserRouter();
+
+  await router.use(path: '/user', router: userRouter.router);
   // router.Get('/', (request){
   //   request.response.write('Hello World!');
   // });
@@ -28,23 +29,18 @@ Future main() async {
     request.response.write('Hello ${params['name']}');
   });
 
-  router.Get('/users', (request){
-    request.response.write('[{name: "pedro"}]');
-  });
+  var server = new Dartis();
+  server.use(router: router);
+  server.listen(4040);
 
-  router.Get('/users/:name/greet/:msg', (HttpRequest request, dynamic params){
-    request.response.write('${params['msg']} ${params['name']}');
-  });
+  // var server = await HttpServer.bind(
+  //   InternetAddress.loopbackIPv4,
+  //   4040,
+  // );
 
-  router.Post('/user',(HttpRequest request) {
-    Response response = new Response(request.response);
-    return userController.createUser(request, response);
-  });
-
-  print('Listening on localhost:${server.port}');
-
-  await for (var request in server) {
-    router.handleRequest(request);
-  }
+  // print('Listening on localhost:${server.port}');
+  // await for (var request in server) {
+  //   router.handleRequest(request);
+  // }
 
 }
