@@ -36,31 +36,21 @@ class Router {
       break;
 
       case 'DELETE':
-        var endpoint = await this._deleteEndpoints.where((e) => this._resolveParams(e.path, request.uri.path)['status'] == 200).toList()[0];
-        var params = _resolveParams(endpoint.path, request.uri.path);
-        if(params['params'].length>0){
-          await endpoint.callback(request, response, params['params']);
-        } else {
-          await endpoint.callback(request, response);
+        if (! await this._findEndpoint(request, response, this._deleteEndpoints)) {
+          this._notFound(request, response);
         }
-        await request.httpRequest.response.close();
       break;
 
       case 'PUT':
-        var endpoint = await this._putEndpoints.where((e) => this._resolveParams(e.path, request.uri.path)['status'] == 200).toList()[0];
-        var params = _resolveParams(endpoint.path, request.uri.path);
-        if(params['params'].length>0){
-          await endpoint.callback(request, response, params['params']);
-        } else {
-          await endpoint.callback(request, response);
+        if (! await this._findEndpoint(request, response, this._putEndpoints)) {
+          this._notFound(request, response);
         }
-        await request.httpRequest.response.close();
       break;
 
     }
   } catch (e) {
     print('Exception in handleRequest: $e');
-    await response.statusCode(404).write('Not Found');
+    await response.statusCode(500).render('<h2>Exception in handleRequest</h2><p>${e}</p>');
     await request.httpRequest.response.close();
   }
   // print('Request handled.');
@@ -131,10 +121,8 @@ class Router {
         found = true;
         if(params['params'].length > 0){
           request.params = params['params'];
-          await endpoint.callback(request, response);
-        } else {
-          await endpoint.callback(request, response);
-        }
+        } 
+        await endpoint.callback(request, response);
         await request.httpRequest.response.close();
         break;
       }

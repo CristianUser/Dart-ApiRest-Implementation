@@ -6,6 +6,9 @@ Coming soon
 
 ### Changelog
 
+#### Version 0.3.2
+- Handling Not Found
+- Handling Errors
 #### Version 0.3.1
 - Server implementation added
 #### Version 0.2.1
