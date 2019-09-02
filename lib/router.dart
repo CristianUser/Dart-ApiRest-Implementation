@@ -24,36 +24,15 @@ class Router {
     switch(request.method){
 
       case 'GET':
-        for (var endpoint in this._getEndpoints) {
-          var params = _resolveParams(endpoint.path, request.uri.path);
-          if(params['status'] == 200){
-            if(params['params'].length > 0){
-              request.params = params['params'];
-              await endpoint.callback(request, response);
-            } else {
-              await endpoint.callback(request, response);
-            }
-            await request.httpRequest.response.close();
-            break;
-          }
+        if (! await this._findEndpoint(request, response, this._getEndpoints)) {
+          this._notFound(request, response);
         }
-        await request.httpRequest.response.close();
       break;
 
       case 'POST':
-        for (var endpoint in this._postEndpoints) {
-          var params = _resolveParams(endpoint.path, request.uri.path);
-          if(params['status'] == 200){
-            if(params['params'].length > 0){
-              await endpoint.callback(request, response, params['params']);
-            } else {
-              await endpoint.callback(request, response);
-            }
-            await request.httpRequest.response.close();
-            break;
-          }
+        if (! await this._findEndpoint(request, response, this._postEndpoints)) {
+          this._notFound(request, response);
         }
-        await request.httpRequest.response.close();
       break;
 
       case 'DELETE':
@@ -139,6 +118,29 @@ class Router {
   }
 
   // Private Methods
+  void _notFound(Request request, Response response) async {
+    response.statusCode(404).render('<h2>Not Found</h2><p>Can\'t ${request.method} in uri <b>${request.uri.path}</b></p>');
+    await request.httpRequest.response.close();
+  }
+
+  Future<bool> _findEndpoint(Request request, Response response, List<Route> endpoints) async {
+    bool found = false;
+    for (var endpoint in endpoints) {
+      var params = _resolveParams(endpoint.path, request.uri.path);
+      if(params['status'] == 200){
+        found = true;
+        if(params['params'].length > 0){
+          request.params = params['params'];
+          await endpoint.callback(request, response);
+        } else {
+          await endpoint.callback(request, response);
+        }
+        await request.httpRequest.response.close();
+        break;
+      }
+    }
+    return found;
+  }
 
   dynamic _resolveParams(String path, String uri)
   {

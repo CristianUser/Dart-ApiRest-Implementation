@@ -1,4 +1,4 @@
-# **Dart**is
+# Dart*is*
 `Dartis` is a Framework for make HTTP APIs based in `ExpressJS`
 
 ### Getting Started

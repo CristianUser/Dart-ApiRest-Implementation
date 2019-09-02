@@ -6,6 +6,9 @@ import 'router.dart';
 
 class Dartis extends Router{
   dynamic core;
+  bool enableLogger = false;
+  bool enableCors = false;
+
 
   Future<void> listen(int port, [Function callback]) async {
     this.core = await HttpServer.bind(
@@ -15,11 +18,26 @@ class Dartis extends Router{
 
     callback(this.core);
     
-    await for (var request in this.core) {
-      Response response = new Response(request.response);
+    await for (HttpRequest request in this.core) {
+      Response res = new Response(request.response);
       Request req =  new Request(request);
+      this._logger(request);
+      this._cors(request);
+      this.handleRequest(req, res);
+    }
+  }
 
-      this.handleRequest(req, response);
+  void _logger(HttpRequest req){
+    if (this.enableLogger) {
+      print('${req.method} in ${req.uri.path} ${DateTime.now()} ');
+    }
+  }
+
+  void _cors(HttpRequest req){
+    if (this.enableCors) {
+      req.response.headers.set("Access-Control-Allow-Origin", "*");
+      req.response.headers.set("Access-Control-Allow-Methods", "POST,GET,DELETE,PUT,OPTIONS");
+ 
     }
   }
 }

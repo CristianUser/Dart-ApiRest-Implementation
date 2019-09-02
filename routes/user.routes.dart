@@ -16,16 +16,10 @@ class UserRouter {
   }
 
   void config() {
-    router.Get('/all', (Request request, Response response){
-      response.write('[{name: "pedro"}]');
-    });
+    router.Get('/all', _userController.getAll);
 
-    router.Get('/all/:name/greet/:msg', (Request request, Response response){
-      response.write('${request.params['msg']} ${request.params['name']}');
-    });
+    router.Get('/:name', _userController.getOne);
 
-    router.Post('/create',(Request request, Response response) {
-      return _userController.createUser(request, response);
-    });
+    router.Post('/create', _userController.createUser);
   }
 }
