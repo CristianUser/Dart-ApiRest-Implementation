@@ -1,22 +1,25 @@
 import 'dart:io';
 
+import 'response.dart';
+import 'request.dart';
 import 'route.dart';
 
 class Router {
 
   List<Route> _getEndpoints = [];
-  List<Map> _postEndpoints = [];
-  List<Map> _putEndpoints = [];
-  List<Map> _deleteEndpoints = [];
+  List<Route> _postEndpoints = [];
+  List<Route> _putEndpoints = [];
+  List<Route> _deleteEndpoints = [];
   
 
   List<Route> get getEndpoints => this._getEndpoints;
-  List<Map> get postEndpoints => this._postEndpoints;
+  List<Route> get postEndpoints => this._postEndpoints;
+  List<Route> get putEndpoints => this._putEndpoints;
+  List<Route> get deleteEndpoints => this._deleteEndpoints;
 
-  Router() {
-  }
+  Router() {}
 
-  Future handleRequest(HttpRequest request) async {
+  Future handleRequest(Request request, Response response) async {
   try {
     switch(request.method){
 
@@ -25,66 +28,72 @@ class Router {
           var params = _resolveParams(endpoint.path, request.uri.path);
           if(params['status'] == 200){
             if(params['params'].length > 0){
-              await endpoint.callback(request, params['params']);
+              request.params = params['params'];
+              await endpoint.callback(request, response);
             } else {
-              await endpoint.callback(request);
+              await endpoint.callback(request, response);
             }
-            await request.response.close();
+            await request.httpRequest.response.close();
             break;
           }
         }
-        await request.response.close();
-      break;
-
-      case 'DELETE':
-        var endpoint = await this._deleteEndpoints.where((e) => this._resolveParams(e['path'], request.uri.path)['status'] == 200).toList()[0];
-        var params = _resolveParams(endpoint['path'], request.uri.path);
-        if(params['params'].length>0){
-          await endpoint['callback'](request, params['params']);
-        } else {
-          await endpoint['callback'](request);
-        }
-        await request.response.close();
-      break;
-
-      case 'PUT':
-        var endpoint = await this._putEndpoints.where((e) => this._resolveParams(e['path'], request.uri.path)['status'] == 200).toList()[0];
-        var params = _resolveParams(endpoint['path'], request.uri.path);
-        if(params['params'].length>0){
-          await endpoint['callback'](request, params['params']);
-        } else {
-          await endpoint['callback'](request);
-        }
-        await request.response.close();
+        await request.httpRequest.response.close();
       break;
 
       case 'POST':
-        var endpoint = await this._postEndpoints.where((e) => this._resolveParams(e['path'], request.uri.path)['status'] == 200).toList()[0];
-        var params = _resolveParams(endpoint['path'], request.uri.path);
-        if(params['params'].length>0){
-          await endpoint['callback'](request, params['params']);
-        } else {
-          await endpoint['callback'](request);
+        for (var endpoint in this._postEndpoints) {
+          var params = _resolveParams(endpoint.path, request.uri.path);
+          if(params['status'] == 200){
+            if(params['params'].length > 0){
+              await endpoint.callback(request, response, params['params']);
+            } else {
+              await endpoint.callback(request, response);
+            }
+            await request.httpRequest.response.close();
+            break;
+          }
         }
-        await request.response.close();
+        await request.httpRequest.response.close();
       break;
+
+      case 'DELETE':
+        var endpoint = await this._deleteEndpoints.where((e) => this._resolveParams(e.path, request.uri.path)['status'] == 200).toList()[0];
+        var params = _resolveParams(endpoint.path, request.uri.path);
+        if(params['params'].length>0){
+          await endpoint.callback(request, response, params['params']);
+        } else {
+          await endpoint.callback(request, response);
+        }
+        await request.httpRequest.response.close();
+      break;
+
+      case 'PUT':
+        var endpoint = await this._putEndpoints.where((e) => this._resolveParams(e.path, request.uri.path)['status'] == 200).toList()[0];
+        var params = _resolveParams(endpoint.path, request.uri.path);
+        if(params['params'].length>0){
+          await endpoint.callback(request, response, params['params']);
+        } else {
+          await endpoint.callback(request, response);
+        }
+        await request.httpRequest.response.close();
+      break;
+
     }
   } catch (e) {
     print('Exception in handleRequest: $e');
-    request.response.statusCode = 404;
-    await request.response.write('Not Found');
-    await request.response.close();
+    await response.statusCode(404).write('Not Found');
+    await request.httpRequest.response.close();
   }
   // print('Request handled.');
 }
 
   /// This method is for register a post endpoint
   void Post(String path, Function callback) {
-    this._postEndpoints.add({
-      'method': 'POST',
-      'path': path,
-      'callback': callback
-    });
+    this._postEndpoints.add(new Route(
+      method: 'POST',
+      path: path,
+      callback: callback
+    ));
   }
 
   void Get(String path, Function callback ){
@@ -96,26 +105,37 @@ class Router {
   }
 
     void Put(String path, Function callback ){
-    this._putEndpoints.add({
-      'method': 'PUT',
-      'path': path,
-      'callback': callback
-    });
+    this._putEndpoints.add(new Route(
+      method: 'PUT',
+      path: path,
+      callback: callback
+    ));
   }
 
   void Delete(String path, Function callback ){
-    this._deleteEndpoints.add({
-      'method': 'DELETE',
-      'path': path,
-      'callback': callback
-    });
+    this._deleteEndpoints.add(new Route(
+      method: 'DELETE',
+      path: path,
+      callback: callback
+    ));
   }
 
   Future use({String path = '', Router router}) async {
     for(Route endpoint in router.getEndpoints){
       this.Get(path + endpoint.path, endpoint.callback);
     }
-    // await this._postEndpoints.addAll(router._postEndpoints);
+
+    for(Route endpoint in router.postEndpoints){
+      this.Post(path + endpoint.path, endpoint.callback);
+    }
+    
+    for(Route endpoint in router.putEndpoints){
+      this.Put(path + endpoint.path, endpoint.callback);
+    }
+
+    for(Route endpoint in router.deleteEndpoints){
+      this.Delete(path + endpoint.path, endpoint.callback);
+    }
   }
 
   // Private Methods

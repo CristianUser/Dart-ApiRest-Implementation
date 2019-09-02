@@ -1,5 +1,7 @@
 import 'dart:io';
 
+import 'request.dart';
+import 'response.dart';
 import 'router.dart';
 
 class Dartis extends Router{
@@ -10,9 +12,14 @@ class Dartis extends Router{
       InternetAddress.loopbackIPv4,
       port,
     );
-    print('Listening on localhost:${this.core.port}');
+
+    callback(this.core);
+    
     await for (var request in this.core) {
-      this.handleRequest(request);
+      Response response = new Response(request.response);
+      Request req =  new Request(request);
+
+      this.handleRequest(req, response);
     }
   }
 }

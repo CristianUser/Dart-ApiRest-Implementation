@@ -17,30 +17,24 @@ Future main() async {
   var userRouter = new UserRouter();
 
   await router.use(path: '/user', router: userRouter.router);
-  // router.Get('/', (request){
-  //   request.response.write('Hello World!');
-  // });
-
-  router.Get('/greet', (request){
-    request.response.write('Hello everbody');
+  router.Get('/', (request){
+    request.response.write('Hello World!');
   });
 
-  router.Get('/greet/:name', (request, params){
-    request.response.write('Hello ${params['name']}');
+  router.Get('/greet', (request, response){
+    response.write('Hello everbody');
+  });
+
+  router.Get('/greet/:name', (request, response){
+    response.write('Hello ${request.params['name']}');
   });
 
   var server = new Dartis();
+
   server.use(router: router);
-  server.listen(4040);
 
-  // var server = await HttpServer.bind(
-  //   InternetAddress.loopbackIPv4,
-  //   4040,
-  // );
-
-  // print('Listening on localhost:${server.port}');
-  // await for (var request in server) {
-  //   router.handleRequest(request);
-  // }
+  server.listen(4040, (core) {
+    print('Listening on localhost:${core.port}');
+  });
 
 }

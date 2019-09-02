@@ -4,6 +4,7 @@ import 'dart:io';
  
 class Request{
   HttpRequest httpRequest;
+  dynamic params;
 
 
   Request(HttpRequest this.httpRequest) {}
@@ -12,14 +13,8 @@ class Request{
     String content = await utf8.decoder.bind(this.httpRequest).join();
     Map body = jsonDecode(content);
     return body;
-  }  
+  }
 
-  // Map get body {
-  //   Map body;
-  //   this._decode().then( (val){ 
-  //     body = val;
-  //   });
-  //   return body;
-  //   }
-
+  String get method => this.httpRequest.method;
+  Uri get uri => this.httpRequest.uri;
 }
